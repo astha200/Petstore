@@ -1,0 +1,33 @@
+# Backend (Go)
+backend/bin/
+backend/server
+backend/*.test
+backend/coverage.out
+backend/vendor/
+
+# Frontend (Node / Vite)
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/*.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# Editors / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Env files
+.env
+.env.local
+.env.*.local
+
+# Docker volumes
+db/data/
+
+# Logs
+*.log
