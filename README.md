@@ -20,16 +20,22 @@ A multi-tenant pet store application:
 
 React Frontend
       ↓
+
 GraphQL Request
       ↓
+
 chi (routes request)
       ↓
+
 gqlgen (parses schema + calls resolvers)
       ↓
+
 Your resolver functions
       ↓
+
 pgx (DB queries / transactions)
       ↓
+      
 PostgreSQL
 
 ## Quick start
