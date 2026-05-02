@@ -1,0 +1,63 @@
+scalar Time
+
+enum Species {
+  CAT
+  DOG
+  FROG
+}
+
+type Pet {
+  id: ID!
+  name: String!
+  species: Species!
+  age: Int!
+  pictureUrl: String!
+  description: String!
+  createdAt: Time!
+}
+
+type SoldPet {
+  id: ID!
+  name: String!
+  species: Species!
+  age: Int!
+  pictureUrl: String!
+  description: String!
+  createdAt: Time!
+  soldAt: Time!
+}
+
+input CreatePetInput {
+  name: String!
+  species: Species!
+  age: Int!
+  pictureUrl: String!
+  description: String!
+}
+
+type CheckoutResult {
+  purchased: [Pet!]!
+}
+
+type Query {
+  # Merchant — auto-scoped to caller's store.
+  unsoldPets: [Pet!]!
+  soldPets(startDate: Time!, endDate: Time!): [SoldPet!]!
+
+  # Customer — public listing for a given store slug.
+  availablePets(store: String!): [Pet!]!
+}
+
+type Mutation {
+  # Merchant
+  createPet(input: CreatePetInput!): Pet!
+  deletePet(id: ID!): Boolean!
+
+  # Customer
+  purchasePet(store: String!, petId: ID!): Pet!
+  checkout(store: String!, petIds: [ID!]!): CheckoutResult!
+}
+
+
+
+

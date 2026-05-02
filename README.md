@@ -35,7 +35,7 @@ Your resolver functions
 
 pgx (DB queries / transactions)
       ↓
-      
+
 PostgreSQL
 
 ## Quick start
@@ -59,4 +59,3 @@ To stop everything:
 ```bash
 docker compose down          # keep the database volume
 docker compose down -v       # also wipe the database
-`
