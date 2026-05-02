@@ -1,7 +1,5 @@
 # Petstore
 
-# Pet Store
-
 A multi-tenant pet store application:
 
 - **Merchants** manage their store via a GraphQL API (no UI).
