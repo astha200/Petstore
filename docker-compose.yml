@@ -1,0 +1,47 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: petstore-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: petstore
+      POSTGRES_PASSWORD: petstore
+      POSTGRES_DB: petstore
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./db/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U petstore -d petstore"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build: ./backend
+    container_name: petstore-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://petstore:petstore@db:5432/petstore?sslmode=disable
+      PORT: "8080"
+      CORS_ORIGIN: "http://localhost:5173"
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build: ./frontend
+    container_name: petstore-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      VITE_GRAPHQL_URL: "http://localhost:8080/query"
+    ports:
+      - "5173:5173"
+
+volumes:
+  db-data:
