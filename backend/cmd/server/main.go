@@ -1,12 +1,11 @@
 // Package main is the entrypoint for the pet store backend.
 //
-// The server exposes:
+// Exposes:
+//   - POST /query       GraphQL API (Basic auth)
+//   - GET  /playground  GraphQL playground
+//   - GET  /healthz     health check
 //
-//   - POST /query       GraphQL endpoint (HTTP Basic auth)
-//   - GET  /playground  GraphiQL UI for ad-hoc queries (unauthenticated)
-//   - GET  /healthz     Liveness probe (unauthenticated)
-//
-// Configuration is read from environment variables. See loadConfig.
+// Configuration comes from environment variables.
 package main
 
 import (
@@ -51,7 +50,7 @@ func main() {
 	runWithGracefulShutdown(router, ":"+cfg.Port)
 }
 
-// ----- configuration -----
+// configuration
 
 type config struct {
 	DSN        string
@@ -74,7 +73,7 @@ func envOr(key, fallback string) string {
 	return fallback
 }
 
-// ----- HTTP routing -----
+// HTTP routing
 
 // newRouter wires the chi router with our middleware stack and routes.
 func newRouter(repo *db.Repo, gql http.Handler, corsOrigin string) http.Handler {
@@ -108,11 +107,9 @@ func health(w http.ResponseWriter, _ *http.Request) {
 	_, _ = w.Write([]byte("ok"))
 }
 
-// ----- GraphQL server -----
+// GraphQL server
 
-// newGraphQLServer wires the gqlgen executable schema with the resolver and a
-// minimal middleware chain: POST/GET transports, an LRU query-document cache,
-// introspection, and APQ.
+// Sets up the GraphQL server with transports, caching, and introspection.
 func newGraphQLServer(repo *db.Repo) *handler.Server {
 	srv := handler.New(graph.NewExecutableSchema(graph.Config{
 		Resolvers: &graph.Resolver{Repo: repo},
@@ -126,11 +123,7 @@ func newGraphQLServer(repo *db.Repo) *handler.Server {
 	return srv
 }
 
-// ----- lifecycle -----
-
-// runWithGracefulShutdown starts the HTTP server and blocks until SIGINT or
-// SIGTERM is received, at which point it gives in-flight requests up to 5
-// seconds to drain before exiting.
+// Starts the server and shuts it down gracefully on SIGINT/SIGTERM.
 func runWithGracefulShutdown(handler http.Handler, addr string) {
 	srv := &http.Server{
 		Addr:              addr,
@@ -162,8 +155,7 @@ func runWithGracefulShutdown(handler http.Handler, addr string) {
 	_ = srv.Shutdown(ctx)
 }
 
-// waitForDB polls Postgres until it can be reached or until the timeout is
-// exhausted. This avoids racing the postgres container at startup.
+// Waits for the database to become reachable before starting the server.
 func waitForDB(dsn string, timeout time.Duration) (*pgxpool.Pool, error) {
 	deadline := time.Now().Add(timeout)
 	var lastErr error

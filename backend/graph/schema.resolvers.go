@@ -126,6 +126,10 @@ func (r *queryResolver) AvailablePets(ctx context.Context, store string) ([]*mod
 	if _, err := auth.RequireCustomer(ctx); err != nil {
 		return nil, err
 	}
+	// surface a distinct error when the store doesn't exist
+	if _, err := r.Repo.StoreBySlug(ctx, store); err != nil {
+        return nil, err 
+    }
 	pets, err := r.Repo.AvailablePetsByStoreSlug(ctx, store)
 	if err != nil {
 		return nil, err
