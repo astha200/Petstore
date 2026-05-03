@@ -59,3 +59,4 @@ To stop everything:
 ```bash
 docker compose down          # keep the database volume
 docker compose down -v       # also wipe the database
+```
