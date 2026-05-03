@@ -1,11 +1,10 @@
 // Package db is the data-access layer. All SQL lives here.
 //
 // Race-condition strategy:
-//   - Purchase paths use SERIALIZABLE-equivalent guards: SELECT ... FOR UPDATE
-//     locks the pet row, then we INSERT into purchases (which has a UNIQUE
-//     constraint on pet_id as the ultimate backstop).
-//   - Checkout locks all selected pet rows in a single transaction ordered by
-//     id to avoid deadlocks, validates them all, then inserts purchases atomically.
+//   - Purchase locks the pet row with SELECT ... FOR UPDATE.
+//   - purchases.pet_id has a UNIQUE constraint as a final safeguard.
+//   - Checkout locks requested pets in sorted order to avoid deadlocks,
+//     validates availability, then inserts purchases in one transaction.
 package db
 
 import (
@@ -30,7 +29,7 @@ func New(pool *pgxpool.Pool) *Repo {
 	return &Repo{pool: pool}
 }
 
-// ----- Users / stores -----
+// Users
 
 func (r *Repo) UserByUsername(ctx context.Context, username string) (*User, error) {
 	row := r.pool.QueryRow(ctx,
@@ -59,7 +58,7 @@ func (r *Repo) StoreBySlug(ctx context.Context, slug string) (*Store, error) {
 	return &s, nil
 }
 
-// ----- Pets: merchant operations -----
+// merchant
 
 func (r *Repo) CreatePet(ctx context.Context, storeID uuid.UUID, name string, species Species, age int, pictureURL, description string) (*Pet, error) {
 	row := r.pool.QueryRow(ctx, `
@@ -90,8 +89,10 @@ func (r *Repo) DeletePet(ctx context.Context, storeID, petID uuid.UUID) error {
 			}
 			return err
 		}
+		// Treat cross-tenant access the same as not-found so we don't leak whether
+		// a pet exists in another store.
 		if ownerID != storeID {
-			return errs.ErrForbidden
+			return errs.ErrPetNotFound
 		}
 		if deletedAt != nil {
 			return errs.ErrPetNotFound
@@ -154,7 +155,7 @@ func (r *Repo) SoldPets(ctx context.Context, storeID uuid.UUID, start, end time.
 	return out, rows.Err()
 }
 
-// ----- Pets: customer operations -----
+// customer
 
 func (r *Repo) AvailablePetsByStoreSlug(ctx context.Context, storeSlug string) ([]Pet, error) {
 	rows, err := r.pool.Query(ctx, `
@@ -219,8 +220,16 @@ func (r *Repo) Checkout(ctx context.Context, customerID uuid.UUID, storeSlug str
 		return nil, errs.ErrInvalidInput
 	}
 
-	// Sort to obtain a stable lock order across concurrent checkouts -> no deadlocks.
-	ordered := append([]uuid.UUID(nil), petIDs...)
+	// Dedupe IDs and lock pets in a stable order to reduce deadlock risk.
+	seen := make(map[uuid.UUID]struct{}, len(petIDs))
+	ordered := make([]uuid.UUID, 0, len(petIDs))
+	for _, id := range petIDs {
+		if _, dup := seen[id]; dup {
+			continue
+		}
+		seen[id] = struct{}{}
+		ordered = append(ordered, id)
+	}
 	sort.Slice(ordered, func(i, j int) bool { return ordered[i].String() < ordered[j].String() })
 
 	purchased := make([]Pet, 0, len(ordered))
@@ -257,7 +266,7 @@ func (r *Repo) Checkout(ctx context.Context, customerID uuid.UUID, storeSlug str
 			return &errs.PetUnavailableError{Names: missing}
 		}
 
-		// Insert purchases. UNIQUE(pet_id) catches anyone who slipped past us.
+		// UNIQUE(pet_id) protects against concurrent purchases.
 		for _, p := range available {
 			if _, err := tx.Exec(ctx,
 				`INSERT INTO purchases (pet_id, customer_id) VALUES ($1, $2)`,
