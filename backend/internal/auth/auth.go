@@ -1,5 +1,4 @@
-// Package auth provides HTTP Basic authentication and a request-scoped context
-// for the authenticated user.
+// Package auth provides HTTP Basic authentication and a request-scoped context for the authenticated user.
 package auth
 
 import (
@@ -14,8 +13,19 @@ import (
 
 type ctxKey struct{}
 
-// Middleware authenticates the request via HTTP Basic and stores the resolved user on the request context. 
-// Anonymous requests are allowed through so that the GraphQL resolver layer can produce per-field auth errors.
+// dummyHash is used to make the unknown-username code path pay the same bcrypt cost as a real comparison. 
+// Without this, an attacker can enumerate valid usernames purely by request-timing.
+var dummyHash = func() []byte {
+	h, err := bcrypt.GenerateFromPassword([]byte("not-a-real-password"), bcrypt.DefaultCost)
+	if err != nil {
+		// DefaultCost is valid, so this should never fail.
+		panic(err)
+	}
+	return h
+}()
+
+// Middleware authenticates Basic Auth credentials and stores the user in context.
+// Requests without credentials continue so resolvers can return field-level auth errors.
 func Middleware(repo *db.Repo) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -26,6 +36,8 @@ func Middleware(repo *db.Repo) func(http.Handler) http.Handler {
 			}
 			user, err := repo.UserByUsername(r.Context(), username)
 			if err != nil {
+				// Burn an equivalent bcrypt cycle so an attacker cannot distinguish "user does not exist" from "wrong password" by timing.
+				_ = bcrypt.CompareHashAndPassword(dummyHash, []byte(password))
 				challenge(w)
 				return
 			}
