@@ -26,6 +26,8 @@ same pet, even with concurrent requests.
 
 ## How this works
 
+The React frontend sends GraphQL mutations and queries over HTTP to the Go backend. `chi` handles routing and runs the auth middleware (HTTP Basic, bcrypt), then hands off to `gqlgen`'s generated executor which calls the resolver functions. The resolvers talk to PostgreSQL via `pgx` — using `SELECT FOR UPDATE` and transactions to make purchases race-safe.
+
 1. React Frontend
 
 
@@ -173,7 +175,7 @@ via the merchant API at any time.
    }
    ```
 4. **Open the storefront:** http://localhost:5173?store=PetVerse — sign in as
-   `alice / alicepass` and you'll see Whiskers. Click **Buy now** or **Add to
+   `astha / asthapass` and you'll see Whiskers. Click **Buy now** or **Add to
    cart** → **Checkout**.
 5. **Query sold pets** as the merchant:
    ```graphql
