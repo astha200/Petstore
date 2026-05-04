@@ -58,7 +58,7 @@ export function Login({ storeSlug }: Props) {
         </button>
 
         <p style={{ fontSize: 12, color: "var(--muted)", margin: 0 }}>
-          Demo customer: <code>alice / alicepass</code>
+          Demo customer: <code>astha / asthapass</code>
         </p>
       </form>
     </div>

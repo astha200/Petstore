@@ -140,7 +140,7 @@ docker compose down -v       # also wipe the database
 | -------- | ---------- | -------------- | --------------------- |
 | Merchant | `PetVerse`     | `PetVersepass`     | Store `PetVerse`          |
 | Merchant | `BestPets` | `BestPetspass` | Store `BestPets`      |
-| Customer | `alice`    | `alicepass`    | All storefronts       |
+| Customer | `astha`    | `asthapass`    | All storefronts       |
 
 The system starts with **15 demo pets** pre-loaded across the two stores
 (9 for PetVerse, 6 for BestPets — see `db/migrations/003_seed_pets.sql`),

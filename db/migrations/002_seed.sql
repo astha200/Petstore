@@ -2,7 +2,7 @@
 -- Passwords (bcrypt cost 10):
 --   PetVerse   -> PetVersepass
 --   BestPets   -> BestPetspass
---   alice      -> alicepass
+--   astha      -> asthapass
 
 WITH new_stores AS (
     INSERT INTO stores (slug, name) VALUES
@@ -16,4 +16,4 @@ UNION ALL
 SELECT 'BestPets', '$2b$10$bHyEAbj8qh/TBkrVshB6/.9gVoJ22Gatt6boGa2zQ0uNt8nnT6Pv2', 'merchant'::user_role, id FROM new_stores WHERE slug = 'BestPets';
 
 INSERT INTO users (username, password_hash, role, store_id)
-VALUES ('alice', '$2b$10$YU1HaRdStSLbu3rj.Z2WuOt74HtF4ZZ2gNL9ouDEGxDb2O619P39u', 'customer'::user_role, NULL);
+VALUES ('astha', '$2a$10$K8pLp.iWy7qlIGTLF5Fyhu/eIZjQH6qwoY4ss25tyiAuqjNQpyuWS', 'customer'::user_role, NULL);
