@@ -33,9 +33,9 @@ func TestPurchasePet_OnlyOneWinsUnderRace(t *testing.T) {
 	repo := db.New(pool)
 
 	// Use seeded data from the local dev setup.
-	var aliceID uuid.UUID
-	if err := pool.QueryRow(ctx, `SELECT id FROM users WHERE username = 'alice'`).Scan(&aliceID); err != nil {
-		t.Fatalf("seeded customer 'alice' not found (run docker compose first): %v", err)
+	var asthaID uuid.UUID
+	if err := pool.QueryRow(ctx, `SELECT id FROM users WHERE username = 'astha'`).Scan(&asthaID); err != nil {
+		t.Fatalf("seeded customer 'astha' not found (run docker compose first): %v", err)
 	}
 
 	var storeID uuid.UUID
@@ -76,7 +76,7 @@ func TestPurchasePet_OnlyOneWinsUnderRace(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			<-start
-			_, err := repo.PurchasePet(ctx, aliceID, storeSlug, pet.ID)
+			_, err := repo.PurchasePet(ctx, asthaID, storeSlug, pet.ID)
 			switch {
 			case err == nil:
 				successes.Add(1)
