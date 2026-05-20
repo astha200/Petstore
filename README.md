@@ -288,7 +288,7 @@ if Postgres is slow, just `docker compose restart backend`.
 recreates the database from scratch.
 
 ---
-
+<!--
 ## Submission notes
 
 - Built and tested on macOS (Apple Silicon).
@@ -297,3 +297,4 @@ recreates the database from scratch.
   `node:20-alpine`) are multi-architecture, so the same `docker compose up
   --build` command works on Linux x86_64 graders' machines without changes.
 - No external services; everything runs locally.
+-->
