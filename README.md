@@ -298,3 +298,8 @@ recreates the database from scratch.
   --build` command works on Linux x86_64 graders' machines without changes.
 - No external services; everything runs locally.
 -->
+---
+
+## License
+
+MIT
